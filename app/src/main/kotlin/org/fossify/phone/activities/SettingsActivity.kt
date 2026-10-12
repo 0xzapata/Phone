@@ -112,6 +112,7 @@ class SettingsActivity : SimpleActivity() {
         setupDisableProximitySensor()
         setupDisableSwipeToAnswer()
         setupAlwaysShowFullscreen()
+        setupAgent()
         setupCallsExport()
         setupCallsImport()
         updateTextColors(binding.settingsHolder)
@@ -189,6 +190,10 @@ class SettingsActivity : SimpleActivity() {
                 }
             }
         }
+    }
+
+    private fun setupAgent() = binding.settingsAgentHolder.setOnClickListener {
+        startActivity(Intent(this, AgentSettingsActivity::class.java))
     }
 
     private fun setupManageSpeedDial() {
