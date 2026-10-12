@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:installLocation="auto">
 
+    <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.READ_CONTACTS" />
     <uses-permission android:name="android.permission.WRITE_CONTACTS" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
@@ -41,6 +42,8 @@
         android:name="org.fossify.commons.FossifyApp"
         android:allowBackup="true"
         android:appCategory="productivity"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_launcher_name"
         android:roundIcon="@mipmap/ic_launcher"
@@ -90,6 +93,13 @@
             android:configChanges="orientation"
             android:exported="false"
             android:label="@string/speed_dial"
+            android:parentActivityName=".activities.SettingsActivity" />
+
+        <activity
+            android:name=".activities.GatewaySettingsActivity"
+            android:configChanges="orientation"
+            android:exported="false"
+            android:label="@string/gateway"
             android:parentActivityName=".activities.SettingsActivity" />
 
         <activity

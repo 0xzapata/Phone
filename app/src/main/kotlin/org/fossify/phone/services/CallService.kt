@@ -7,6 +7,9 @@ import org.fossify.commons.extensions.canUseFullScreenIntent
 import org.fossify.commons.extensions.hasPermission
 import org.fossify.commons.helpers.PERMISSION_POST_NOTIFICATIONS
 import org.fossify.phone.activities.CallActivity
+import org.fossify.phone.gateway.GatewayWorker
+import org.fossify.phone.gateway.CALL_ENDED
+import org.fossify.phone.gateway.CALL_STARTED
 import org.fossify.phone.extensions.config
 import org.fossify.phone.extensions.isOutgoing
 import org.fossify.phone.extensions.keyguardManager
@@ -36,6 +39,7 @@ class CallService : InCallService() {
         CallManager.onCallAdded(call)
         CallManager.inCallService = this
         call.registerCallback(callListener)
+        GatewayWorker.enqueueCall(this, call, CALL_STARTED)
 
         // Incoming/Outgoing (locked): high priority (FSI)
         // Incoming (unlocked): if user opted in, low priority ➜ manual activity start, otherwise high priority (FSI)
@@ -68,6 +72,7 @@ class CallService : InCallService() {
     override fun onCallRemoved(call: Call) {
         super.onCallRemoved(call)
         call.unregisterCallback(callListener)
+        GatewayWorker.enqueueCall(this, call, CALL_ENDED)
         val wasPrimaryCall = call == CallManager.getPrimaryCall()
         CallManager.onCallRemoved(call)
         if (CallManager.getPhoneState() == NoCall) {
