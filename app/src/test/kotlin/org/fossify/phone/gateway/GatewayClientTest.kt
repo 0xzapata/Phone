@@ -11,26 +11,6 @@ class GatewayClientTest {
     private val sevenAm = 1_791_788_400_250L
 
     @Test
-    fun smsEventJsonHasExactlyTheContractFields() {
-        val event = GatewayEvent(
-            id = "1b4e28ba-2fa1-4d3e-9c6a-7f0a1c2d3e4f",
-            kind = SMS_RECEIVED,
-            occurredAtMs = sevenAm,
-            number = "+4512345678",
-            displayName = "Alice",
-            body = "Your code is 123456"
-        )
-        val json = JSONObject(eventJson(event))
-        assertEquals(setOf("id", "kind", "occurred_at", "number", "display_name", "body"), keysOf(json))
-        assertEquals("1b4e28ba-2fa1-4d3e-9c6a-7f0a1c2d3e4f", json.get("id"))
-        assertEquals("sms_received", json.get("kind"))
-        assertEquals("2026-10-12T07:00:00Z", json.get("occurred_at"))
-        assertEquals("+4512345678", json.get("number"))
-        assertEquals("Alice", json.get("display_name"))
-        assertEquals("Your code is 123456", json.get("body"))
-    }
-
-    @Test
     fun callEventJsonHasExactlyTheContractFields() {
         val event = GatewayEvent(
             id = "2c5f39cb-3ab2-4e4f-8d7b-8a1b2c3d4e5f",
@@ -59,6 +39,7 @@ class GatewayClientTest {
     fun gatewayUrlMustBeHttps() {
         assertFalse(isGatewayUrl("http://phone-gateway.tail1234.ts.net"))
         assertFalse(isGatewayUrl(""))
+        assertFalse(isGatewayUrl("https://"))
         assertTrue(isGatewayUrl("https://phone-gateway.tail1234.ts.net"))
     }
 

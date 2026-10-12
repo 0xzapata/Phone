@@ -33,7 +33,6 @@ import java.time.temporal.ChronoUnit
 import java.util.UUID
 import java.util.concurrent.TimeUnit
 
-const val SMS_RECEIVED = "sms_received"
 const val CALL_STARTED = "call_started"
 const val CALL_ENDED = "call_ended"
 
@@ -43,6 +42,8 @@ private const val BACKOFF_SECONDS = 30L
 private const val MAX_RETRIES = 10
 private const val CONNECT_TIMEOUT_MS = 15_000
 private const val READ_TIMEOUT_MS = 30_000
+private const val MAX_NUMBER_CHARS = 32
+private const val MAX_NAME_CHARS = 120
 
 fun isMissed(kind: String, outgoing: Boolean, connectTimeMillis: Long) =
     kind == CALL_ENDED && !outgoing && connectTimeMillis == 0L
@@ -53,26 +54,21 @@ data class GatewayEvent(
     val occurredAtMs: Long,
     val number: String,
     val displayName: String,
-    val body: String = "",
     val direction: String = "",
     val durationSeconds: Int = 0,
     val missed: Boolean = false
 )
 
-fun eventJson(event: GatewayEvent): String {
-    val json = JSONObject()
-        .put("id", event.id)
-        .put("kind", event.kind)
-        .put("occurred_at", Instant.ofEpochMilli(event.occurredAtMs).truncatedTo(ChronoUnit.SECONDS).toString())
-        .put("number", event.number)
-        .put("display_name", event.displayName)
-    if (event.kind == SMS_RECEIVED) {
-        json.put("body", event.body)
-    } else {
-        json.put("direction", event.direction).put("duration_s", event.durationSeconds).put("missed", event.missed)
-    }
-    return json.toString()
-}
+fun eventJson(event: GatewayEvent): String = JSONObject()
+    .put("id", event.id)
+    .put("kind", event.kind)
+    .put("occurred_at", Instant.ofEpochMilli(event.occurredAtMs).truncatedTo(ChronoUnit.SECONDS).toString())
+    .put("number", event.number)
+    .put("display_name", event.displayName)
+    .put("direction", event.direction)
+    .put("duration_s", event.durationSeconds)
+    .put("missed", event.missed)
+    .toString()
 
 class GatewayWorker(context: Context, params: WorkerParameters) : Worker(context, params) {
     override fun doWork(): Result {
@@ -95,6 +91,7 @@ class GatewayWorker(context: Context, params: WorkerParameters) : Worker(context
             connection.requestMethod = "POST"
             connection.connectTimeout = CONNECT_TIMEOUT_MS
             connection.readTimeout = READ_TIMEOUT_MS
+            connection.instanceFollowRedirects = false
             connection.doOutput = true
             connection.setRequestProperty("Authorization", "Bearer $token")
             connection.setRequestProperty("Content-Type", "application/json")
@@ -137,7 +134,7 @@ class GatewayWorker(context: Context, params: WorkerParameters) : Worker(context
             val details = call.details
             val outgoing = call.isOutgoing()
             val number = if (details.handlePresentation == TelecomManager.PRESENTATION_ALLOWED) {
-                details.handle?.schemeSpecificPart?.normalizePhoneNumber().orEmpty()
+                details.handle?.schemeSpecificPart?.normalizePhoneNumber().orEmpty().take(MAX_NUMBER_CHARS)
             } else {
                 ""
             }
@@ -146,7 +143,7 @@ class GatewayWorker(context: Context, params: WorkerParameters) : Worker(context
                 kind = kind,
                 occurredAtMs = System.currentTimeMillis(),
                 number = number,
-                displayName = details.callerDisplayName.orEmpty(),
+                displayName = details.callerDisplayName.orEmpty().take(MAX_NAME_CHARS),
                 direction = if (outgoing) "outgoing" else "incoming",
                 durationSeconds = if (kind == CALL_ENDED) call.getCallDuration() else 0,
                 missed = isMissed(kind, outgoing, details.connectTimeMillis)

@@ -2,8 +2,10 @@ package org.fossify.phone.gateway
 
 import android.content.Context
 import androidx.core.content.edit
+import java.net.URI
 
-fun isGatewayUrl(url: String) = url.startsWith("https://")
+fun isGatewayUrl(url: String) =
+    url.startsWith("https://") && !runCatching { URI(url).host }.getOrNull().isNullOrEmpty()
 
 fun isAllowed(number: String, allowlist: Set<String>) = allowlist.isEmpty() || number in allowlist
 
