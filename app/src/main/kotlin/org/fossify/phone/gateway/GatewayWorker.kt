@@ -73,8 +73,13 @@ fun eventJson(event: GatewayEvent): String = JSONObject()
 class GatewayWorker(context: Context, params: WorkerParameters) : Worker(context, params) {
     override fun doWork(): Result {
         val config = GatewayConfig(applicationContext)
+        val json = inputData.getString(KEY_EVENT_JSON).orEmpty()
+        // Settings can change while an event waits for the network: never post under old consent.
+        if (!config.enabled || !isAllowed(JSONObject(json).optString("number"), config.allowlist)) {
+            return Result.success()
+        }
         val code = try {
-            post(config.gatewayUrl, config.deviceToken, inputData.getString(KEY_EVENT_JSON).orEmpty())
+            post(config.gatewayUrl, config.deviceToken, json)
         } catch (_: IOException) {
             null
         }
@@ -138,12 +143,17 @@ class GatewayWorker(context: Context, params: WorkerParameters) : Worker(context
             } else {
                 ""
             }
+            val displayName = if (details.callerDisplayNamePresentation == TelecomManager.PRESENTATION_ALLOWED) {
+                details.callerDisplayName.orEmpty().take(MAX_NAME_CHARS)
+            } else {
+                ""
+            }
             val event = GatewayEvent(
                 id = UUID.randomUUID().toString(),
                 kind = kind,
                 occurredAtMs = System.currentTimeMillis(),
                 number = number,
-                displayName = details.callerDisplayName.orEmpty().take(MAX_NAME_CHARS),
+                displayName = displayName,
                 direction = if (outgoing) "outgoing" else "incoming",
                 durationSeconds = if (kind == CALL_ENDED) call.getCallDuration() else 0,
                 missed = isMissed(kind, outgoing, details.connectTimeMillis)

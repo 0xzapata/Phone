@@ -40,6 +40,8 @@ class GatewayClientTest {
         assertFalse(isGatewayUrl("http://phone-gateway.tail1234.ts.net"))
         assertFalse(isGatewayUrl(""))
         assertFalse(isGatewayUrl("https://"))
+        assertFalse(isGatewayUrl("https://phone-gateway.tail1234.ts.net/?key=x"))
+        assertFalse(isGatewayUrl("https://phone-gateway.tail1234.ts.net/#x"))
         assertTrue(isGatewayUrl("https://phone-gateway.tail1234.ts.net"))
     }
 

@@ -4,8 +4,12 @@ import android.content.Context
 import androidx.core.content.edit
 import java.net.URI
 
-fun isGatewayUrl(url: String) =
-    url.startsWith("https://") && !runCatching { URI(url).host }.getOrNull().isNullOrEmpty()
+/** https only, with a host, and no query or fragment, because the worker appends the path. */
+fun isGatewayUrl(url: String): Boolean {
+    val uri = runCatching { URI(url) }.getOrNull() ?: return false
+    return url.startsWith("https://") && !uri.host.isNullOrEmpty() &&
+        uri.rawQuery == null && uri.rawFragment == null
+}
 
 fun isAllowed(number: String, allowlist: Set<String>) = allowlist.isEmpty() || number in allowlist
 
