@@ -144,5 +144,9 @@ dependencies {
     implementation(libs.eventbus)
     implementation(libs.libphonenumber)
     implementation(libs.geocoder)
+    implementation(libs.androidx.documentfile)
+    implementation(libs.androidx.work.runtime.ktx)
+    testImplementation(libs.junit)
+    testImplementation(libs.json)
     detektPlugins(libs.compose.detekt)
 }
